@@ -5,20 +5,32 @@ import csv
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-STEAM_PATH = r"C:\Program Files (x86)\Steam"
-GAME_DLL_PATH = r"C:\Program Files (x86)\Steam\steamapps\common\Neon White\Neon White_Data\Plugins\x86_64\steam_api64.dll"
+# ── Config ─────────────────────────────────────────────────────────────────
+STEAM_PATH     = r"C:\Program Files (x86)\Steam"
+GAME_DLL_PATH  = r"C:\Program Files (x86)\Steam\steamapps\common\Neon White\Neon White_Data\Plugins\x86_64\steam_api64.dll"
+APP_ID         = "1533420"
+ENTRIES_PER_LEVEL = 1000
+BATCH_SIZE        = 100
+OUTPUT_CSV        = "neon_white_top1000.csv"
 
+# Write app ID file — Steam API requires this on disk
+with open("steam_appid.txt", "w") as f:
+    f.write(APP_ID)
+
+# ── Load DLL ───────────────────────────────────────────────────────────────
 os.add_dll_directory(STEAM_PATH)
 os.add_dll_directory(os.path.dirname(GAME_DLL_PATH))
 
-if not os.path.exists("steam_appid.txt"):
-    with open("steam_appid.txt", "w") as f:
-        f.write("1533420")
-
 steam = ctypes.CDLL(GAME_DLL_PATH)
-steam.SteamAPI_Init.restype = ctypes.c_bool
-steam.SteamAPI_Init()
+print("✓ steam_api64.dll loaded")
 
+steam.SteamAPI_Init.restype = ctypes.c_bool
+if not steam.SteamAPI_Init():
+    print("✗ SteamAPI_Init failed — is Steam running and logged in?")
+    exit(1)
+print("✓ Steam initialized")
+
+# ── Interfaces ─────────────────────────────────────────────────────────────
 steam.SteamAPI_GetHSteamPipe.restype = ctypes.c_int
 steam.SteamAPI_GetHSteamUser.restype = ctypes.c_int
 h_pipe = steam.SteamAPI_GetHSteamPipe()
@@ -64,6 +76,7 @@ steam.SteamAPI_ISteamUserStats_RequestCurrentStats.argtypes = [ctypes.c_void_p]
 steam.SteamAPI_ISteamUserStats_RequestCurrentStats(user_stats)
 steam.SteamAPI_RunCallbacks()
 time.sleep(1)
+print("✓ Steam interfaces ready\n")
 
 # ── Structs ────────────────────────────────────────────────────────────────
 class LeaderboardFindResult(ctypes.Structure):
@@ -84,134 +97,6 @@ class LeaderboardScoresDownloaded(ctypes.Structure):
 
 LEADERBOARD_FIND_CALLBACK   = 1104
 LEADERBOARD_SCORES_CALLBACK = 1105
-BATCH_SIZE = 100
-ENTRIES_PER_LEVEL = 1000
-
-# ── Level map: display name -> internal name ───────────────────────────────
-LEVELS = [
-    ("Movement",                "TUT_MOVEMENT"),
-    ("Pummel",                  "TUT_SHOOTINGRANGE"),
-    ("Gunner",                  "SLUGGER"),
-    ("Cascade",                 "TUT_FROG"),
-    ("Elevate",                 "TUT_JUMP"),
-    ("Bounce",                  "GRID_TUT_BALLOON"),
-    ("Purify",                  "TUT_BOMB2"),
-    ("Climb",                   "TUT_BOMBJUMP"),
-    ("Fasttrack",               "TUT_FASTTRACK"),
-    ("Glass Port",              "GRID_PORT"),
-    ("Take Flight",             "GRID_PAGODA"),
-    ("Godspeed",                "TUT_RIFLE"),
-    ("Dasher",                  "TUT_RIFLEJOCK"),
-    ("Thrasher",                "TUT_DASHENEMY"),
-    ("Outstretched",            "GRID_JUMPDASH"),
-    ("Smackdown",               "GRID_SMACKDOWN"),
-    ("Catwalk",                 "GRID_MEATY_BALLOONS"),
-    ("Fastlane",                "GRID_FAST_BALLOON"),
-    ("Distinguish",             "GRID_DRAGON2"),
-    ("Dancer",                  "GRID_DASHDANCE"),
-    ("Guardian",                "TUT_GUARDIAN"),
-    ("Stomp",                   "TUT_UZI"),
-    ("Jumper",                  "TUT_JUMPER"),
-    ("Dash Tower",              "TUT_BOMB"),
-    ("Descent",                 "GRID_DESCEND"),
-    ("Driller",                 "GRID_STAMPEROUT"),
-    ("Canals",                  "GRID_CRUISE"),
-    ("Sprint",                  "GRID_SPRINT"),
-    ("Mountain",                "GRID_MOUNTAIN"),
-    ("Superkinetic",            "GRID_SUPERKINETIC"),
-    ("Arrival",                 "GRID_ARRIVAL"),
-    ("Forgotten City",          "FLOATING"),
-    ("The Clocktower",          "GRID_BOSS_YELLOW"),
-    ("Fireball",                "GRID_HOPHOP"),
-    ("Ringer",                  "GRID_RINGER_TUTORIAL"),
-    ("Cleaner",                 "GRID_RINGER_EXPLORATION"),
-    ("Warehouse",               "GRID_HOPSCOTCH"),
-    ("Boom",                    "GRID_BOOM"),
-    ("Streets",                 "GRID_SNAKE_IN_MY_BOOT"),
-    ("Steps",                   "GRID_FLOCK"),
-    ("Demolition",              "GRID_BOMBS_AHOY"),
-    ("Arcs",                    "GRID_ARCS"),
-    ("Apartment",               "GRID_APARTMENT"),
-    ("Hanging Gardens",         "TUT_TRIPWIRE"),
-    ("Tangled",                 "GRID_TANGLED"),
-    ("Waterworks",              "GRID_HUNT"),
-    ("Killswitch",              "GRID_CANNONS"),
-    ("Falling",                 "GRID_FALLING"),
-    ("Shocker",                 "TUT_SHOCKER2"),
-    ("Bouquet",                 "TUT_SHOCKER"),
-    ("Prepare",                 "GRID_PREPARE"),
-    ("Triptrack",               "GRID_TRIPMAZE"),
-    ("Race",                    "GRID_RACE"),
-    ("Bubble",                  "TUT_FORCEFIELD2"),
-    ("Shield",                  "GRID_SHIELD"),
-    ("Pop",                     "GRID_VERTICAL"),
-    ("Minefield",               "GRID_MINEFIELD"),
-    ("Mimic",                   "TUT_MIMIC"),
-    ("Trigger",                 "GRID_MIMICPOP"),
-    ("Greenhouse",              "GRID_SWARM"),
-    ("Sweep",                   "GRID_SWITCH"),
-    ("Fuse",                    "GRID_TRAPS2"),
-    ("Heaven's Edge",           "TUT_ROCKETJUMP"),
-    ("Zipline",                 "TUT_ZIPLINE"),
-    ("Swing",                   "GRID_CLIMBANG"),
-    ("Chute",                   "GRID_ROCKETUZI"),
-    ("Crash",                   "GRID_CRASHLAND"),
-    ("Ascent",                  "GRID_ESCALATE"),
-    ("Straightaway",            "GRID_SPIDERCLAUS"),
-    ("Firecracker",             "GRID_FIRECRACKER_2"),
-    ("Streak",                  "GRID_SPIDERMAN"),
-    ("Mirror",                  "GRID_DESTRUCTION"),
-    ("Escalation",              "GRID_HEAT"),
-    ("Bolt",                    "GRID_BOLT"),
-    ("Godstreak",               "GRID_PON"),
-    ("Plunge",                  "GRID_CHARGE"),
-    ("Mayhem",                  "GRID_MIMICFINALE"),
-    ("Barrage",                 "GRID_BARRAGE"),
-    ("Estate",                  "GRID_1GUN"),
-    ("Trapwire",                "GRID_HECK"),
-    ("Ricochet",                "GRID_ANTFARM"),
-    ("Fortress",                "GRID_FORTRESS"),
-    ("Holy Ground",             "GRID_GODTEMPLE_ENTRY"),
-    ("The Third Temple",        "GRID_BOSS_GODSDEATHTEMPLE"),
-    ("Spree",                   "GRID_EXTERMINATOR"),
-    ("Breakthrough",            "GRID_FEVER"),
-    ("Glide",                   "GRID_SKIPSLIDE"),
-    ("Closer",                  "GRID_CLOSER"),
-    ("Hike",                    "GRID_HIKE"),
-    ("Switch",                  "GRID_SKIP"),
-    ("Access",                  "GRID_CEILING"),
-    ("Congregation",            "GRID_BOOP"),
-    ("Sequence",                "GRID_TRIPRAP"),
-    ("Marathon",                "GRID_ZIPRAP"),
-    ("Sacrifice",               "TUT_ORIGIN"),
-    ("Absolution",              "GRID_BOSS_RAPTURE"),
-    # Sidequests
-    ("Elevate Traversal I",     "SIDEQUEST_OBSTACLE_PISTOL"),
-    ("Elevate Traversal II",    "SIDEQUEST_OBSTACLE_PISTOL_SHOOT"),
-    ("Purify Traversal",        "SIDEQUEST_OBSTACLE_MACHINEGUN"),
-    ("Godspeed Traversal",      "SIDEQUEST_OBSTACLE_RIFLE_2"),
-    ("Stomp Traversal",         "SIDEQUEST_OBSTACLE_UZI2"),
-    ("Fireball Traversal",      "SIDEQUEST_OBSTACLE_SHOTGUN"),
-    ("Dominion Traversal",      "SIDEQUEST_OBSTACLE_ROCKETLAUNCHER"),
-    ("Book of Life Traversal",  "SIDEQUEST_RAPTURE_QUEST"),
-    ("Doghouse",                "SIDEQUEST_DODGER"),
-    ("Choker",                  "GRID_GLASSPATH"),
-    ("Chain",                   "GRID_GLASSPATH2"),
-    ("Razor",                   "GRID_GLASSPATH3"),
-    ("All Seeing Eye",          "SIDEQUEST_ALL_SEEING_EYE"),
-    ("Resident Saw I",          "SIDEQUEST_RESIDENTSAWB"),
-    ("Resident Saw II",         "SIDEQUEST_RESIDENTSAW"),
-    ("Sunset Flip Powerbomb",   "SIDEQUEST_SUNSET_FLIP_POWERBOMB"),
-    ("Climbing Gym",            "SIDEQUEST_BARREL_CLIMB"),
-    ("Fisherman Suplex",        "SIDEQUEST_FISHERMAN_SUPLEX"),
-    ("STF",                     "SIDEQUEST_STF"),
-    ("Attitude Adjustment",     "SIDEQUEST_ATTITUDE_ADJUSTMENT"),
-    ("Rocket",                  "SIDEQUEST_ROCKETGODZ"),
-    ("??? (Memory 1)",          "SIDEQUEST_GREEN_MEMORY"),
-    ("??? (Memory 2)",          "SIDEQUEST_GREEN_MEMORY_2"),
-    ("??? (Memory 3)",          "SIDEQUEST_GREEN_MEMORY_3"),
-    ("??? (Memory 4)",          "SIDEQUEST_GREEN_MEMORY_4"),
-]
 
 # ── Function signatures ────────────────────────────────────────────────────
 steam.SteamAPI_ISteamUtils_IsAPICallCompleted.restype = ctypes.c_bool
@@ -290,7 +175,7 @@ def fetch_batch(lb_handle, start, end):
             player_name = name_bytes.decode('utf-8', errors='replace') \
                           if name_bytes else str(entry.steam_id_user)
             entries.append({
-                "level":    None,  # filled in by caller
+                "level":    None,
                 "rank":     entry.global_rank,
                 "steam_id": entry.steam_id_user,
                 "name":     player_name,
@@ -299,15 +184,159 @@ def fetch_batch(lb_handle, start, end):
             })
     return entries
 
+# ── Level list ─────────────────────────────────────────────────────────────
+LEVELS = [
+    # Mission 1 - Rebirth
+    ("Movement",                "TUT_MOVEMENT"),
+    ("Pummel",                  "TUT_SHOOTINGRANGE"),
+    ("Gunner",                  "SLUGGER"),
+    ("Cascade",                 "TUT_FROG"),
+    ("Elevate",                 "TUT_JUMP"),
+    ("Bounce",                  "GRID_TUT_BALLOON"),
+    ("Purify",                  "TUT_BOMB2"),
+    ("Climb",                   "TUT_BOMBJUMP"),
+    ("Fasttrack",               "TUT_FASTTRACK"),
+    ("Glass Port",              "GRID_PORT"),
+    # Mission 2 - Killer Inside
+    ("Take Flight",             "GRID_PAGODA"),
+    ("Godspeed",                "TUT_RIFLE"),
+    ("Dasher",                  "TUT_RIFLEJOCK"),
+    ("Thrasher",                "TUT_DASHENEMY"),
+    ("Outstretched",            "GRID_JUMPDASH"),
+    ("Smackdown",               "GRID_SMACKDOWN"),
+    ("Catwalk",                 "GRID_MEATY_BALLOONS"),
+    ("Fastlane",                "GRID_FAST_BALLOON"),
+    ("Distinguish",             "GRID_DRAGON2"),
+    ("Dancer",                  "GRID_DASHDANCE"),
+    # Mission 3 - Only Shallow
+    ("Guardian",                "TUT_GUARDIAN"),
+    ("Stomp",                   "TUT_UZI"),
+    ("Jumper",                  "TUT_JUMPER"),
+    ("Dash Tower",              "TUT_BOMB"),
+    ("Descent",                 "GRID_DESCEND"),
+    ("Driller",                 "GRID_STAMPEROUT"),
+    ("Canals",                  "GRID_CRUISE"),
+    ("Sprint",                  "GRID_SPRINT"),
+    ("Mountain",                "GRID_MOUNTAIN"),
+    ("Superkinetic",            "GRID_SUPERKINETIC"),
+    # Mission 4 - The Old City
+    ("Arrival",                 "GRID_ARRIVAL"),
+    ("Forgotten City",          "FLOATING"),
+    ("The Clocktower",          "GRID_BOSS_YELLOW"),
+    # Mission 5 - The Burn That Cures
+    ("Fireball",                "GRID_HOPHOP"),
+    ("Ringer",                  "GRID_RINGER_TUTORIAL"),
+    ("Cleaner",                 "GRID_RINGER_EXPLORATION"),
+    ("Warehouse",               "GRID_HOPSCOTCH"),
+    ("Boom",                    "GRID_BOOM"),
+    ("Streets",                 "GRID_SNAKE_IN_MY_BOOT"),
+    ("Steps",                   "GRID_FLOCK"),
+    ("Demolition",              "GRID_BOMBS_AHOY"),
+    ("Arcs",                    "GRID_ARCS"),
+    ("Apartment",               "GRID_APARTMENT"),
+    # Mission 6 - Covenant
+    ("Hanging Gardens",         "TUT_TRIPWIRE"),
+    ("Tangled",                 "GRID_TANGLED"),
+    ("Waterworks",              "GRID_HUNT"),
+    ("Killswitch",              "GRID_CANNONS"),
+    ("Falling",                 "GRID_FALLING"),
+    ("Shocker",                 "TUT_SHOCKER2"),
+    ("Bouquet",                 "TUT_SHOCKER"),
+    ("Prepare",                 "GRID_PREPARE"),
+    ("Triptrack",               "GRID_TRIPMAZE"),
+    ("Race",                    "GRID_RACE"),
+    # Mission 7 - Reckoning
+    ("Bubble",                  "TUT_FORCEFIELD2"),
+    ("Shield",                  "GRID_SHIELD"),
+    ("Overlook",                "SA L VAGE2"),
+    ("Pop",                     "GRID_VERTICAL"),
+    ("Minefield",               "GRID_MINEFIELD"),
+    ("Mimic",                   "TUT_MIMIC"),
+    ("Trigger",                 "GRID_MIMICPOP"),
+    ("Greenhouse",              "GRID_SWARM"),
+    ("Sweep",                   "GRID_SWITCH"),
+    ("Fuse",                    "GRID_TRAPS2"),
+    # Mission 8 - Benediction
+    ("Heaven's Edge",           "TUT_ROCKETJUMP"),
+    ("Zipline",                 "TUT_ZIPLINE"),
+    ("Swing",                   "GRID_CLIMBANG"),
+    ("Chute",                   "GRID_ROCKETUZI"),
+    ("Crash",                   "GRID_CRASHLAND"),
+    ("Ascent",                  "GRID_ESCALATE"),
+    ("Straightaway",            "GRID_SPIDERCLAUS"),
+    ("Firecracker",             "GRID_FIRECRACKER_2"),
+    ("Streak",                  "GRID_SPIDERMAN"),
+    ("Mirror",                  "GRID_DESTRUCTION"),
+    # Mission 9 - Apocrypha
+    ("Escalation",              "GRID_HEAT"),
+    ("Bolt",                    "GRID_BOLT"),
+    ("Godstreak",               "GRID_PON"),
+    ("Plunge",                  "GRID_CHARGE"),
+    ("Mayhem",                  "GRID_MIMICFINALE"),
+    ("Barrage",                 "GRID_BARRAGE"),
+    ("Estate",                  "GRID_1GUN"),
+    ("Trapwire",                "GRID_HECK"),
+    ("Ricochet",                "GRID_ANTFARM"),
+    ("Fortress",                "GRID_FORTRESS"),
+    # Mission 10 - The Third Temple
+    ("Holy Ground",             "GRID_GODTEMPLE_ENTRY"),
+    ("The Third Temple",        "GRID_BOSS_GODSDEATHTEMPLE"),
+    # Mission 11 - Thousand Pound Butterfly
+    ("Spree",                   "GRID_EXTERMINATOR"),
+    ("Breakthrough",            "GRID_FEVER"),
+    ("Glide",                   "GRID_SKIPSLIDE"),
+    ("Closer",                  "GRID_CLOSER"),
+    ("Hike",                    "GRID_HIKE"),
+    ("Switch",                  "GRID_SKIP"),
+    ("Access",                  "GRID_CEILING"),
+    ("Congregation",            "GRID_BOOP"),
+    ("Sequence",                "GRID_TRIPRAP"),
+    ("Marathon",                "GRID_ZIPRAP"),
+    # Mission 12 - Hand of God
+    ("Sacrifice",               "TUT_ORIGIN"),
+    ("Absolution",              "GRID_BOSS_RAPTURE"),
+    # Sidequests
+    ("Elevate Traversal I",     "SIDEQUEST_OBSTACLE_PISTOL"),
+    ("Elevate Traversal II",    "SIDEQUEST_OBSTACLE_PISTOL_SHOOT"),
+    ("Purify Traversal",        "SIDEQUEST_OBSTACLE_MACHINEGUN"),
+    ("Godspeed Traversal",      "SIDEQUEST_OBSTACLE_RIFLE_2"),
+    ("Stomp Traversal",         "SIDEQUEST_OBSTACLE_UZI2"),
+    ("Fireball Traversal",      "SIDEQUEST_OBSTACLE_SHOTGUN"),
+    ("Dominion Traversal",      "SIDEQUEST_OBSTACLE_ROCKETLAUNCHER"),
+    ("Book of Life Traversal",  "SIDEQUEST_RAPTURE_QUEST"),
+    ("Doghouse",                "SIDEQUEST_DODGER"),
+    ("Choker",                  "GRID_GLASSPATH"),
+    ("Chain",                   "GRID_GLASSPATH2"),
+    ("Hellevator",              "GRID_HELLVATOR"),
+    ("Razor",                   "GRID_GLASSPATH3"),
+    ("All Seeing Eye",          "SIDEQUEST_ALL_SEEING_EYE"),
+    ("Resident Saw I",          "SIDEQUEST_RESIDENTSAWB"),
+    ("Resident Saw II",         "SIDEQUEST_RESIDENTSAW"),
+    ("Sunset Flip Powerbomb",   "SIDEQUEST_SUNSET_FLIP_POWERBOMB"),
+    ("Balloon Mountain",        "GRID_BALLOONLAIR"),
+    ("Climbing Gym",            "SIDEQUEST_BARREL_CLIMB"),
+    ("Fisherman Suplex",        "SIDEQUEST_FISHERMAN_SUPLEX"),
+    ("STF",                     "SIDEQUEST_STF"),
+    ("Arena",                   "SIDEQUEST_ARENASIXNINE"),
+    ("Attitude Adjustment",     "SIDEQUEST_ATTITUDE_ADJUSTMENT"),
+    ("Rocket",                  "SIDEQUEST_ROCKETGODZ"),
+    # Green ??? Memory sidequests
+    ("??? (Memory 1)",          "SIDEQUEST_GREEN_MEMORY"),
+    ("??? (Memory 2)",          "SIDEQUEST_GREEN_MEMORY_2"),
+    ("??? (Memory 3)",          "SIDEQUEST_GREEN_MEMORY_3"),
+    ("??? (Memory 4)",          "SIDEQUEST_GREEN_MEMORY_4"),
+]
+
 # ── Main loop ──────────────────────────────────────────────────────────────
-OUTPUT_CSV = "neon_white_top1000.csv"
+print(f"Fetching top {ENTRIES_PER_LEVEL} entries for {len(LEVELS)} levels...\n")
 
 with open(OUTPUT_CSV, "w", newline="", encoding="utf-8") as f:
     writer = csv.DictWriter(f, fieldnames=["level", "rank", "steam_id", "name", "score_ms", "time"])
     writer.writeheader()
 
-    for display_name, internal_name in LEVELS:
-        print(f"\n[{display_name}] Finding leaderboard...", end=" ", flush=True)
+    for i, (display_name, internal_name) in enumerate(LEVELS, 1):
+        print(f"[{i}/{len(LEVELS)}] {display_name} ({internal_name})...", end=" ", flush=True)
+
         lb_handle = find_leaderboard(internal_name)
         if not lb_handle:
             print("not found, skipping.")
@@ -315,10 +344,10 @@ with open(OUTPUT_CSV, "w", newline="", encoding="utf-8") as f:
 
         total = steam.SteamAPI_ISteamUserStats_GetLeaderboardEntryCount(user_stats, lb_handle)
         fetch_count = min(total, ENTRIES_PER_LEVEL)
-        print(f"{total:,} total entries, fetching top {fetch_count}.")
+        print(f"{total:,} total, fetching {fetch_count}.")
 
-        start = 1
         level_entries = []
+        start = 1
         while start <= fetch_count:
             end = min(start + BATCH_SIZE - 1, fetch_count)
             batch = fetch_batch(lb_handle, start, end)
@@ -331,8 +360,8 @@ with open(OUTPUT_CSV, "w", newline="", encoding="utf-8") as f:
             time.sleep(0.05)
 
         writer.writerows(level_entries)
-        f.flush()  # write to disk after each level in case of interruption
-        print(f"  -> Wrote {len(level_entries)} entries.")
+        f.flush()
+        print(f"    -> Wrote {len(level_entries)} entries.")
 
-print(f"\nAll done. Results saved to C:\\SteamScraper\\{OUTPUT_CSV}")
+print(f"\nAll done! Results saved to C:\\SteamScraper\\{OUTPUT_CSV}")
 steam.SteamAPI_Shutdown()
