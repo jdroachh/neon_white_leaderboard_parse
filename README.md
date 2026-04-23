@@ -100,6 +100,54 @@ The CSV contains the following columns:
 
 ---
 
+## Individual Level Search
+
+In addition to the bulk export script, a second script `IL_level_search.py` provides an interactive search tool for querying a single level's leaderboard at a time.
+
+### Setup
+
+Place `IL_level_search.py` in `C:\SteamScraper\` alongside `steam_api64.dll`. No additional setup is required.
+
+```
+C:\SteamScraper\
+    steam_api64.dll
+    neonwhite_leaderboards.py
+    IL_level_search.py
+```
+
+### Running
+
+With Steam open:
+
+```
+cd C:\SteamScraper
+python IL_level_search.py
+```
+
+### Usage
+
+The script runs as an interactive loop with four prompts:
+
+**1. Level name** — Type any part of a level name and the script will match it against the full list of 121 levels. Typing `list` shows all levels numbered. Partial matches are supported — typing `fire` will match both `Fireball` and `Firecracker` and ask you to choose.
+
+**2. Entry count** — Enter how many entries to fetch (e.g. `10`, `100`, `500`). The total number of entries on that leaderboard is shown first so you know the maximum available.
+
+**3. Output format** — Choose how to handle the results:
+
+| Option | Behaviour |
+|---|---|
+| `1` | Print results to the console |
+| `2` | Save results to a CSV file |
+| `3` | Both — print to console and save to CSV |
+
+**4. Search again** — After results are shown, the script asks if you want to search another level. Type `y` to continue or `n` to exit.
+
+### CSV output
+
+When saving to CSV, the file is named automatically based on the level and entry count — for example `Movement_top10.csv` — and saved to `C:\SteamScraper\`. The columns are identical to the bulk export format: `rank`, `steam_id`, `name`, `score_ms`, and `time`.
+
+---
+
 ## How it works
 
 Rather than using the public Steam Web API (which requires a publisher key for leaderboard access), this script loads the game's own `steam_api64.dll` directly via Python's built-in `ctypes` library. It then calls the same Steamworks SDK functions the game itself uses to read leaderboard data — `FindLeaderboard`, `DownloadLeaderboardEntries`, and `GetDownloadedLeaderboardEntry` — polling the async call results until they complete. No third-party libraries are required.
