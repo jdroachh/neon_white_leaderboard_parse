@@ -63,7 +63,7 @@ cd C:\SteamScraper
 python neonwhite_leaderboards.py
 ```
 
-The script will connect to Steam, iterate over all 125 leaderboards, and write results to:
+The script will connect to Steam, iterate over all 121 leaderboards, and write results to:
 
 ```
 C:\SteamScraper\neon_white_top1000.csv
@@ -94,7 +94,7 @@ The CSV contains the following columns:
 
 ## Notes and limitations
 
-- **Rate limiting:** The script adds a small delay between batches to be respectful to Steam's servers. Fetching top 1,000 entries across all 125 levels takes approximately 20–25 minutes.
+- **Rate limiting:** The script adds a small delay between batches to be respectful to Steam's servers. Fetching top 1,000 entries across all 121 levels takes approximately 20–25 minutes.
 - **Steam must be running:** The script uses the Steamworks SDK locally and requires an active Steam session. It does not use the public Web API and requires no API key.
 - **Windows only:** The `steam_api64.dll` approach is Windows-specific. Linux/Mac would require a different DLL and path setup.
 
