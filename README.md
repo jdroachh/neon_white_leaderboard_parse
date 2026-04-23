@@ -1,7 +1,4 @@
-[neon_white_leaderboard_guide.md](https://github.com/user-attachments/files/26994538/neon_white_leaderboard_guide.md)
-# neon_white_leaderboard_parse
-A guide to pulling global leaderboard data for all levels in Neon White using Python and the Steam API — no developer key required.
-# How to Scrape Neon White Steam Leaderboards
+[neon_white_leaderboard_guide(1).md](https://github.com/user-attachments/files/27018595/neon_white_leaderboard_guide.1.md)# How to Scrape Neon White Steam Leaderboards
 
 A guide to pulling global leaderboard data for all levels in Neon White using Python and the Steam API — no developer key required.
 
@@ -39,36 +36,23 @@ C:\SteamScraper\steam_api64.dll
 
 ---
 
-## Step 3 — Create the App ID file
-
-Create a plain text file called `steam_appid.txt` in `C:\SteamScraper` containing just the number:
-
-```
-1533420
-```
-
-This tells the Steam API which game to connect to. Make sure there are no extra spaces or blank lines.
-
-> When saving in Notepad, set "Save as type" to **All Files** to prevent it saving as `steam_appid.txt.txt`.
-
----
-
-## Step 4 — Create the script
+## Step 3 — Create the script
 
 Create a file called `neonwhite_leaderboards.py` in `C:\SteamScraper` and paste in the full script from the bottom of this guide.
+
+> The script automatically creates `steam_appid.txt` on first run — you do not need to create it manually.
 
 Your folder should now look like this:
 
 ```
 C:\SteamScraper\
     steam_api64.dll
-    steam_appid.txt
     neonwhite_leaderboards.py
 ```
 
 ---
 
-## Step 5 — Run the script
+## Step 4 — Run the script
 
 1. Open Steam and log in
 2. Open Command Prompt (`Win + R` → type `cmd` → Enter)
@@ -79,7 +63,7 @@ cd C:\SteamScraper
 python neonwhite_leaderboards.py
 ```
 
-The script will connect to Steam, iterate over all 110 leaderboards, and write results to:
+The script will connect to Steam, iterate over all 121 leaderboards, and write results to:
 
 ```
 C:\SteamScraper\neon_white_top1000.csv
@@ -110,8 +94,7 @@ The CSV contains the following columns:
 
 ## Notes and limitations
 
-- **Rate limiting:** The script adds a small delay between batches to be respectful to Steam's servers. Fetching top 1,000 entries across all 110 levels takes approximately 15–20 minutes.
-- **4 levels not found:** `SALVAGE2` (Overlook), `GRID_HELLEVATOR` (Hellevator), `SIDEQUEST_BALLOONLAIR` (Balloon Mountain), and `SIDEQUEST_AREASIXNINE` (Arena) returned no leaderboard data — their internal names may differ or the leaderboards may not be active.
+- **Rate limiting:** The script adds a small delay between batches to be respectful to Steam's servers. Fetching top 1,000 entries across all 125 levels takes approximately 20–25 minutes.
 - **Steam must be running:** The script uses the Steamworks SDK locally and requires an active Steam session. It does not use the public Web API and requires no API key.
 - **Windows only:** The `steam_api64.dll` approach is Windows-specific. Linux/Mac would require a different DLL and path setup.
 
