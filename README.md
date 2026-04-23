@@ -95,7 +95,6 @@ The CSV contains the following columns:
 ## Notes and limitations
 
 - **Rate limiting:** The script adds a small delay between batches to be respectful to Steam's servers. Fetching top 1,000 entries across all 125 levels takes approximately 20–25 minutes.
-- **Quirky internal names:** Three levels have non-obvious internal names worth knowing — `SA L VAGE2` (Overlook) contains literal spaces, `GRID_HELLVATOR` (Hellevator) drops a letter from the display name, and `GRID_BALLOONLAIR` (Balloon Mountain) uses the `GRID_` prefix instead of `SIDEQUEST_` like other sidequests.
 - **Steam must be running:** The script uses the Steamworks SDK locally and requires an active Steam session. It does not use the public Web API and requires no API key.
 - **Windows only:** The `steam_api64.dll` approach is Windows-specific. Linux/Mac would require a different DLL and path setup.
 
