@@ -38,7 +38,7 @@ C:\SteamScraper\steam_api64.dll
 
 ## Step 3 — Create the script
 
-Create a file called `neonwhite_leaderboards.py` in `C:\SteamScraper` and paste in the full script from this repo. You can also download the `neonwhite_leaderboards.py` from the repo and move it into the folder `C:\SteamScraper`.
+Create a file called `neonwhite_leaderboards.py` in `C:\SteamScraper` and paste in the full script from the bottom of this guide.
 
 > The script automatically creates `steam_appid.txt` on first run — you do not need to create it manually.
 
@@ -63,7 +63,7 @@ cd C:\SteamScraper
 python neonwhite_leaderboards.py
 ```
 
-The script will connect to Steam, iterate over all 121 leaderboards, and write results to:
+The script will connect to Steam, iterate over all 125 leaderboards, and write results to:
 
 ```
 C:\SteamScraper\neon_white_top1000.csv
@@ -94,7 +94,7 @@ The CSV contains the following columns:
 
 ## Notes and limitations
 
-- **Rate limiting:** The script adds a small delay between batches to be respectful to Steam's servers. Fetching top 1,000 entries across all 121 levels takes approximately 20–25 minutes.
+- **Rate limiting:** The script adds a small delay between batches to be respectful to Steam's servers. Fetching top 1,000 entries across all 125 levels takes approximately 20–25 minutes.
 - **Steam must be running:** The script uses the Steamworks SDK locally and requires an active Steam session. It does not use the public Web API and requires no API key.
 - **Windows only:** The `steam_api64.dll` approach is Windows-specific. Linux/Mac would require a different DLL and path setup.
 
@@ -102,17 +102,17 @@ The CSV contains the following columns:
 
 ## Individual Level Search
 
-In addition to the bulk export script, a second script `IL_level_search.py` provides an interactive search tool for querying a single level's leaderboard at a time.
+In addition to the bulk export script, a second script `neonwhite_search.py` provides an interactive search tool for querying a single level's leaderboard at a time.
 
 ### Setup
 
-Place `IL_level_search.py` in `C:\SteamScraper\` alongside `steam_api64.dll`. No additional setup is required.
+Place `neonwhite_search.py` in `C:\SteamScraper\` alongside `steam_api64.dll`. No additional setup is required.
 
 ```
 C:\SteamScraper\
     steam_api64.dll
     neonwhite_leaderboards.py
-    IL_level_search.py
+    neonwhite_search.py
 ```
 
 ### Running
@@ -121,14 +121,14 @@ With Steam open:
 
 ```
 cd C:\SteamScraper
-python IL_level_search.py
+python neonwhite_search.py
 ```
 
 ### Usage
 
 The script runs as an interactive loop with four prompts:
 
-**1. Level name** — Type any part of a level name and the script will match it against the full list of 121 levels. Typing `list` shows all levels numbered. Partial matches are supported — typing `fire` will match both `Fireball` and `Firecracker` and ask you to choose.
+**1. Level name** — Type any part of a level name and the script will match it against the full list of 125 levels. Typing `list` shows all levels numbered. Partial matches are supported — typing `fire` will match both `Fireball` and `Firecracker` and ask you to choose.
 
 **2. Entry count** — Enter how many entries to fetch (e.g. `10`, `100`, `500`). The total number of entries on that leaderboard is shown first so you know the maximum available.
 
@@ -145,6 +145,98 @@ The script runs as an interactive loop with four prompts:
 ### CSV output
 
 When saving to CSV, the file is named automatically based on the level and entry count — for example `Movement_top10.csv` — and saved to `C:\SteamScraper\`. The columns are identical to the bulk export format: `rank`, `steam_id`, `name`, `score_ms`, and `time`.
+
+---
+
+## Player Lookup
+
+A third script `neonwhite_player_lookup.py` lets you look up a specific player's rank and time on either a single level or an entire chapter/sidequest group.
+
+### Setup
+
+Place `neonwhite_player_lookup.py` in `C:\SteamScraper\` alongside `steam_api64.dll`. Your folder should now look like this:
+
+```
+C:\SteamScraper\
+    steam_api64.dll
+    neonwhite_leaderboards.py
+    neonwhite_search.py
+    neonwhite_player_lookup.py
+```
+
+### Running
+
+With Steam open:
+
+```
+cd C:\SteamScraper
+python neonwhite_player_lookup.py
+```
+
+### Finding a Steam ID
+
+Players are identified by their **64-bit Steam ID** — a 17-digit number. To find one:
+
+1. Open the player's Steam profile in a browser
+2. The ID appears directly in the URL, e.g. `steamcommunity.com/profiles/<17-digit-id>`
+3. If the profile uses a custom URL (e.g. `/id/username`), use a site like [steamid.io](https://steamid.io) to convert it
+
+### Usage
+
+The script runs as an interactive loop with the following prompts:
+
+**1. Steam ID** — Enter the player's 17-digit Steam ID. The script will resolve and display their current display name as confirmation.
+
+**2. Search mode** — Choose how to search:
+
+| Option | Behaviour |
+|---|---|
+| `1` | Single level — search one specific level |
+| `2` | Chapter / Sidequest group — search all levels in a chapter at once |
+
+**3a. Single level** — Type any part of a level name. Partial matches are supported and typing `list` shows all 125 levels. If multiple levels match your input, you'll be asked to pick one.
+
+**3b. Chapter selection** — Choose from a numbered list of all 15 groups:
+
+| # | Group |
+|---|---|
+| 1–12 | Main story chapters (Rebirth through Hand of God) |
+| 13 | Sidequests — Red |
+| 14 | Sidequests — Violet |
+| 15 | Sidequests — Yellow |
+
+**4. Output format** — Choose how to handle results:
+
+| Option | Behaviour |
+|---|---|
+| `1` | Print results to the console |
+| `2` | Save results to a CSV file |
+| `3` | Both — print to console and save to CSV |
+
+**5. Search again** — After results are shown, the script asks if you want to look up another player or level. Type `y` to continue or `n` to exit.
+
+### Output format
+
+Results are displayed as one row per level showing rank and time:
+
+```
+  ─────────────────────────────────────────────────────────────────
+  Player: YourName  |  1 - Rebirth
+  ─────────────────────────────────────────────────────────────────
+  Level                           Rank        Time
+  ─────────────────────────────────────────────────────────────────
+  Movement                       #4821     21.334s
+  Pummel                         #1203     18.112s
+  ─────────────────────────────────────────────────────────────────
+```
+
+When saving to CSV, the file is named automatically based on the player name and context — for example `YourName_1Rebirth.csv` — and saved to `C:\SteamScraper\`. Columns are `level`, `rank`, `time`, `score_ms`, and `total` (total entries on that leaderboard).
+
+> **Note on missing entries:** If a player has no entry on a level's leaderboard, that level is skipped in the output. This means they either haven't completed the level or haven't submitted a time.
+
+### Troubleshooting
+
+If you receive a `SyntaxError` when running the script, it is likely caused by hidden formatting characters being injected during copy/paste from a web page or chat interface. To fix this, paste the script into Notepad first to strip formatting, then save as a `.py` file with "Save as type" set to **All Files** and encoding set to **UTF-8**.
 
 ---
 
