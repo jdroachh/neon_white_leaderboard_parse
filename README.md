@@ -38,7 +38,7 @@ C:\SteamScraper\steam_api64.dll
 
 ## Step 3 — Create the script
 
-Create a file called `neonwhite_leaderboards.py` in `C:\SteamScraper` and paste in the full script from the bottom of this guide.
+Create a file called `neonwhite_leaderboards.py` in `C:\SteamScraper` and paste in the full script from the repo (or download the contents of the repo).
 
 > The script automatically creates `steam_appid.txt` on first run — you do not need to create it manually.
 
