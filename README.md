@@ -234,10 +234,6 @@ When saving to CSV, the file is named automatically based on the player name and
 
 > **Note on missing entries:** If a player has no entry on a level's leaderboard, that level is skipped in the output. This means they either haven't completed the level or haven't submitted a time.
 
-### Troubleshooting
-
-If you receive a `SyntaxError` when running the script, it is likely caused by hidden formatting characters being injected during copy/paste from a web page or chat interface. To fix this, paste the script into Notepad first to strip formatting, then save as a `.py` file with "Save as type" set to **All Files** and encoding set to **UTF-8**.
-
 ---
 
 ## How it works
