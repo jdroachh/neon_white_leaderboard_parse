@@ -1,3 +1,6 @@
+# Use at your own risk!
+I recommend using an alt and not touching any built in rate limiting or you risk being flagged by Steam.
+
 # How to Scrape Neon White Steam Leaderboards
 
 A guide to pulling global leaderboard data for all levels in Neon White using Python and the Steam API — no developer key required.
