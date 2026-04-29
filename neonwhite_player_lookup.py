@@ -209,6 +209,11 @@ CHAPTERS = {
 
 CHAPTER_NAMES = list(CHAPTERS.keys())
 
+# All 121 levels excluding the 4 ??? Green Memory sidequests
+WHOLE_GAME_LEVELS = [
+    (d, i) for d, i in LEVELS if not d.startswith("???")
+]
+
 # ── Load DLL ───────────────────────────────────────────────────────────────
 os.add_dll_directory(STEAM_PATH)
 os.add_dll_directory(os.path.dirname(GAME_DLL_PATH))
@@ -454,11 +459,12 @@ while True:
     print("  Search mode:")
     print("    1. Single level")
     print("    2. Chapter / Sidequest group")
+    print("    3. Whole game (all 121 levels)")
     while True:
-        mode = input("  Select mode (1/2): ").strip()
-        if mode in ("1", "2"):
+        mode = input("  Select mode (1/2/3): ").strip()
+        if mode in ("1", "2", "3"):
             break
-        print("  Please enter 1 or 2.")
+        print("  Please enter 1, 2, or 3.")
 
     rows = []
     context_label = ""
@@ -535,6 +541,29 @@ while True:
             if not match:
                 continue
             _, internal_name = match
+            print(f"    {display_name}...", end=" ", flush=True)
+
+            lb_handle = find_leaderboard(internal_name)
+            if not lb_handle:
+                print("leaderboard not found.")
+                continue
+
+            total = steam.SteamAPI_ISteamUserStats_GetLeaderboardEntryCount(
+                user_stats, lb_handle
+            )
+            entry = get_player_entry(lb_handle, steam_id)
+            if entry:
+                rows.append(format_result_row(display_name, entry.global_rank, entry.score, total))
+                print(f"rank #{entry.global_rank}")
+            else:
+                print("no entry.")
+
+    # ── Whole game ─────────────────────────────────────────────────────────
+    elif mode == "3":
+        context_label = "Whole Game"
+        print(f"\n  Looking up {player_name} across all 121 levels...\n")
+
+        for display_name, internal_name in WHOLE_GAME_LEVELS:
             print(f"    {display_name}...", end=" ", flush=True)
 
             lb_handle = find_leaderboard(internal_name)
